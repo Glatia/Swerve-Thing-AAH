@@ -1,8 +1,7 @@
 import wpilib
 import phoenix6
 import navx
-from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.config import HolonomicPathFollowerConfig, PIDConstants, ReplanningConfig
+import math
 from phoenix6.configs.cancoder_configs import *
 from phoenix6.configs.talon_fx_configs import *
 from phoenix6.configs.config_groups import MagnetSensorConfigs
@@ -47,4 +46,32 @@ class SwerveModule(wpilib.Subsystem):
         self.dir_motor.set_position(-self.turn_encoder.get_absolute_position().wait_for_update(0.02).value * k_direction_gear_ratio)
 
     def getModuleState(self) -> SwerveModuleState:
+        return SwerveModuleState(rots_to_meters(self.drive_motor.get_velocity().value), self.getAngle())
+    
+    def getModulePosition(self) -> SwerveModulePosition:
+        return SwerveModulePosition(rots_to_meters(self.drive_motor.get_position().value), self.getAngle())
+    
+    def setModuleState(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
+    #   I'm not sure what the point of optimize is since we do the math farther down
+    #   desiredState.optimize(desiredState, self.getAngle())
+        desiredAngle = desiredState.angle.degrees() % 360
+
+        angleDistance = math.fabs(desiredAngle - self.dirTargetAngle)
+
+        if (angleDistance > 90 and angleDistance < 270):
+            targetAngle = (desiredAngle + 180) % 360
+            self.invert = -1
+        else:
+            targetAngle = desiredAngle
+            self.invert = 1
+        
+        targetAngleDist = math.fabs(targetAngle - self.dirTargetAngle)
+
+        if targetAngleDist > 180:
+            targetAngleDist = abs(targetAngleDist - 360)
+
+        rotChange = degs_to_rots(targetAngleDist)
+
+        angleDifference = targetAngle - self.dirTargetAngle
+        
 
