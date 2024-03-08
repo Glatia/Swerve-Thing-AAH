@@ -40,19 +40,19 @@ class SwerveModule(commands2.Subsystem):
 
         self.sim = 0
 
-    def getAngle(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(rots_to_degs(self.dir_motor.get_rotor_position().value / k_direction_gear_ratio))
+    def get_angle(self) -> Rotation2d:
+        return Rotation2d.fromDegrees((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio)*360)
     
-    def resetSensorPos(self) -> None:
+    def reset_sensor_pos(self) -> None:
         self.dir_motor.set_position(-self.turn_encoder.get_absolute_position().wait_for_update(0.02).value * k_direction_gear_ratio)
 
-    def getModuleState(self) -> SwerveModuleState:
-        return SwerveModuleState(rots_to_meters(self.drive_motor.get_velocity().value), self.getAngle())
+    def get_state(self) -> SwerveModuleState:
+        return SwerveModuleState(rots_to_meters(self.drive_motor.get_velocity().value), self.get_angle())
     
-    def getModulePosition(self) -> SwerveModulePosition:
-        return SwerveModulePosition(rots_to_meters(self.drive_motor.get_position().value), self.getAngle())
+    def get_pos(self) -> SwerveModulePosition:
+        return SwerveModulePosition(rots_to_meters(self.drive_motor.get_position().value), self.get_angle())
     
-    def setModuleState(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
+    def set_state(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
 
         desiredState.optimize(desiredState, self.getAngle())
         desiredAngle = desiredState.angle.degrees() % 360
@@ -65,18 +65,20 @@ class SwerveModule(commands2.Subsystem):
         else:
             targetAngle = desiredAngle
             self.invert = 1
-        
+
         targetAngleDist = math.fabs(targetAngle - self.currentAngle)
+
+        # Not quite sure why we need this since the target angle should never be over 90 degrees away from the current angle
 
         if targetAngleDist > 180:
             targetAngleDist = abs(targetAngleDist - 360)
 
-        rotChange = degs_to_rots(targetAngleDist)
+        rotChange = targetAngleDist / 360
 
         angleDifference = targetAngle - self.currentAngle
         
         if angleDifference < 0:
-            angleDifference -= 360
+            angleDifference += 360
         
         if angleDifference > 180:
             self.currentRot -= rotChange
@@ -92,6 +94,37 @@ class SwerveModule(commands2.Subsystem):
 class Swerve(commands2.Subsystem):
     
     navx = navx.AHRS.create_spi()
+    navx.enableLogging(False)
+
+    kinematics = SwerveDrive4Kinematics(Translation2d(1, 1), Translation2d(-1, 1), Translation2d(1, -1), Translation2d(-1, -1))
+
+    fl = SwerveModule("FL", DriveMotorConstants(MotorIDs.LEFT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_FRONT_DIRECTION), CANConstants.F_L_ID, CANConstants.F_L_OFFSET)
+    rl = SwerveModule("RL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.F_R_ID, CANConstants.F_R_OFFSET)
+    
+    fr = SwerveModule("FR", DriveMotorConstants(MotorIDs.RIGHT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_FRONT_DIRECTION), CANConstants.F_R_ID, CANConstants.F_R_OFFSET)
+    rr = SwerveModule("RR", DriveMotorConstants(MotorIDs.RIGHT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_REAR_DIRECTION), CANConstants.R_R_ID, CANConstants.R_R_OFFSET)
+
+    field = Field2d()
 
     def __init_(self):
-        pass
+        super().__init__()
+        
+        self.odometry = SwerveDrive4PoseEstimator(self.kinematics, self.get_angle(), (self.fl.get_pos(), self.rl.get_pos(), self.fr.get_pos(), self.rr.get_pos()), Pose2d())
+
+        SmartDashboard.putData(self.field)
+
+        # I'm assuming this puts a button in smartdashboard to reset yaw
+        reset_yaw = InstantCommand(lambda: self.reset_yaw())
+        reset_yaw.setName("Reset Yaw")
+        SmartDashboard.putData("Reset Yaw", reset_yaw)
+
+        self.max_module_speed()
+
+
+    def reset_yaw(self) -> Self:
+        self.navx.reset()
+        return self
+
+    def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None
+        self.max_speed = max_speed
+

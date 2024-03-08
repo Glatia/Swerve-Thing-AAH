@@ -18,11 +18,17 @@ class MotorIDs:
     ELEVATORMOTOR_RIGHT = 11
     ELEVATORMOTOR_LEFT = 12
     
-class CANIDs:
-    LEFT_FRONT = 5
-    LEFT_REAR = 6
-    RIGHT_FRONT = 7
-    RIGHT_REAR = 8
+class CANConstants:
+    F_L_ID = 5 # Front Left
+    R_L_ID = 6 # Rear Left
+    F_R_ID = 7 # Front Right
+    R_R_ID = 8 # Rear Right
+
+    F_L_OFFSET = -0.77001953125
+    R_L_OFFSET = -0.49951171875
+    F_R_OFFSET = 0.569580078125
+    R_R_OFFSET = 0.596435546875
+
 
 class IntakeConstants:
     GEAR_RATIO = 5
@@ -137,9 +143,3 @@ def meters_to_rots(meters: float, ratio: float) -> float:
 
 def rots_to_meters(rotation: float, ratio: float=1) -> float:
     return (rotation / ratio) * (pi * SwerveConstants.k_wheel_size)
-
-def rots_to_degs(rotation: float) -> float:
-    return rotation * 360
-
-def degs_to_rots(degrees: float) -> float:
-    return degrees / 360
