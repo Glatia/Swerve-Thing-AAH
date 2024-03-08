@@ -19,15 +19,15 @@ class MotorIDs:
     ELEVATORMOTOR_LEFT = 12
     
 class CANConstants:
-    F_L_ID = 5 # Front Left
-    R_L_ID = 6 # Rear Left
-    F_R_ID = 7 # Front Right
-    R_R_ID = 8 # Rear Right
+    FL_ID = 5 # Front Left
+    RL_ID = 6 # Rear Left
+    FR_ID = 7 # Front Right
+    RR_ID = 8 # Rear Right
 
-    F_L_OFFSET = -0.77001953125
-    R_L_OFFSET = -0.49951171875
-    F_R_OFFSET = 0.569580078125
-    R_R_OFFSET = 0.596435546875
+    FL_OFFSET = -0.77001953125
+    RL_OFFSET = -0.49951171875
+    FR_OFFSET = 0.569580078125
+    RR_OFFSET = 0.596435546875
 
 
 class IntakeConstants:

@@ -19,6 +19,7 @@ from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModu
 
 from constants import *
 
+# Swerve Module class
 class SwerveModule(commands2.Subsystem):
 
     def __init__(self, module_name, drive_motor_constants: DriveMotorConstants, dir_motor_constants: DirectionMotorConstants, CAN_id: int, CAN_offset: float) -> None:
@@ -40,25 +41,30 @@ class SwerveModule(commands2.Subsystem):
 
         self.sim = 0
 
+    # Returns the current angle based off of the rotor position of the direction motor and the gear ratio between it and the wheel
     def get_angle(self) -> Rotation2d:
         return Rotation2d.fromDegrees((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio)*360)
     
     def reset_sensor_pos(self) -> None:
         self.dir_motor.set_position(-self.turn_encoder.get_absolute_position().wait_for_update(0.02).value * k_direction_gear_ratio)
 
-    def get_state(self) -> SwerveModuleState:
+    # Returns the current state
+    def get_module_state(self) -> SwerveModuleState:
         return SwerveModuleState(rots_to_meters(self.drive_motor.get_velocity().value), self.get_angle())
     
+    # Returns the current position
     def get_pos(self) -> SwerveModulePosition:
         return SwerveModulePosition(rots_to_meters(self.drive_motor.get_position().value), self.get_angle())
     
-    def set_state(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
-
-        desiredState.optimize(desiredState, self.getAngle())
+    # Sets the module state
+    def set_module_state(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
+        
+        desiredState.optimize(desiredState, self.get_angle())
         desiredAngle = desiredState.angle.degrees() % 360
 
         angleDistance = math.fabs(desiredAngle - self.currentAngle)
 
+        # Angle Optimization
         if (angleDistance > 90 and angleDistance < 270):
             targetAngle = (desiredAngle + 180) % 360
             self.invert = -1
@@ -98,11 +104,11 @@ class Swerve(commands2.Subsystem):
 
     kinematics = SwerveDrive4Kinematics(Translation2d(1, 1), Translation2d(-1, 1), Translation2d(1, -1), Translation2d(-1, -1))
 
-    fl = SwerveModule("FL", DriveMotorConstants(MotorIDs.LEFT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_FRONT_DIRECTION), CANConstants.F_L_ID, CANConstants.F_L_OFFSET)
-    rl = SwerveModule("RL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.F_R_ID, CANConstants.F_R_OFFSET)
+    fl = SwerveModule("FL", DriveMotorConstants(MotorIDs.LEFT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_FRONT_DIRECTION), CANConstants.FL_ID, CANConstants.FL_OFFSET)
+    rl = SwerveModule("RL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.FR_ID, CANConstants.FR_OFFSET)
     
-    fr = SwerveModule("FR", DriveMotorConstants(MotorIDs.RIGHT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_FRONT_DIRECTION), CANConstants.F_R_ID, CANConstants.F_R_OFFSET)
-    rr = SwerveModule("RR", DriveMotorConstants(MotorIDs.RIGHT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_REAR_DIRECTION), CANConstants.R_R_ID, CANConstants.R_R_OFFSET)
+    fr = SwerveModule("FR", DriveMotorConstants(MotorIDs.RIGHT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_FRONT_DIRECTION), CANConstants.FR_ID, CANConstants.FR_OFFSET)
+    rr = SwerveModule("RR", DriveMotorConstants(MotorIDs.RIGHT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_REAR_DIRECTION), CANConstants.RR_ID, CANConstants.RR_OFFSET)
 
     field = Field2d()
 
@@ -120,11 +126,12 @@ class Swerve(commands2.Subsystem):
 
         self.max_module_speed()
 
-
     def reset_yaw(self) -> Self:
         self.navx.reset()
         return self
 
-    def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None
+    # Not sure if I need this because I think it's for Autonomous but I'll leave it here
+    def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None:
         self.max_speed = max_speed
+    
 
