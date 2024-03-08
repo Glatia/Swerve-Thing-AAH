@@ -1,5 +1,6 @@
 import wpilib
 import phoenix6
+import commands2
 import navx
 import math
 from phoenix6.configs.cancoder_configs import *
@@ -7,7 +8,7 @@ from phoenix6.configs.talon_fx_configs import *
 from phoenix6.configs.config_groups import MagnetSensorConfigs
 from phoenix6.controls import *
 from phoenix6.hardware import CANcoder, TalonFX
-from phoenix6.controls.motion_magic_voltage import MotionMagicVoltage
+from phoenix6.controls.motion_magic_voltage import MotionMagicVoltage, VelocityVoltage
 from phoenix6.signals import *
 from typing import Self
 from wpilib import DriverStation, Field2d, RobotBase, SmartDashboard
@@ -18,7 +19,7 @@ from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModu
 
 from constants import *
 
-class SwerveModule(wpilib.Subsystem):
+class SwerveModule(commands2.Subsystem):
 
     def __init__(self, module_name, drive_motor_constants: DriveMotorConstants, dir_motor_constants: DirectionMotorConstants, CAN_id: int, CAN_offset: float) -> None:
 
@@ -35,7 +36,7 @@ class SwerveModule(wpilib.Subsystem):
         self.dir_motor = TalonFX(dir_motor_constants.motor_id, "rio")
         dir_motor_constants.apply_configuration(self.dir_motor)
 
-        self.dirTargetPos = self.dirTargetAngle = 0.0
+        self.currentRot = self.currentAngle = 0.0
 
         self.sim = 0
 
@@ -52,11 +53,11 @@ class SwerveModule(wpilib.Subsystem):
         return SwerveModulePosition(rots_to_meters(self.drive_motor.get_position().value), self.getAngle())
     
     def setModuleState(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
-    #   I'm not sure what the point of optimize is since we do the math farther down
-    #   desiredState.optimize(desiredState, self.getAngle())
+
+        desiredState.optimize(desiredState, self.getAngle())
         desiredAngle = desiredState.angle.degrees() % 360
 
-        angleDistance = math.fabs(desiredAngle - self.dirTargetAngle)
+        angleDistance = math.fabs(desiredAngle - self.currentAngle)
 
         if (angleDistance > 90 and angleDistance < 270):
             targetAngle = (desiredAngle + 180) % 360
@@ -65,13 +66,32 @@ class SwerveModule(wpilib.Subsystem):
             targetAngle = desiredAngle
             self.invert = 1
         
-        targetAngleDist = math.fabs(targetAngle - self.dirTargetAngle)
+        targetAngleDist = math.fabs(targetAngle - self.currentAngle)
 
         if targetAngleDist > 180:
             targetAngleDist = abs(targetAngleDist - 360)
 
         rotChange = degs_to_rots(targetAngleDist)
 
-        angleDifference = targetAngle - self.dirTargetAngle
+        angleDifference = targetAngle - self.currentAngle
         
+        if angleDifference < 0:
+            angleDifference -= 360
+        
+        if angleDifference > 180:
+            self.currentRot -= rotChange
+        else:
+            self.currentRot += rotChange
+        
+        self.currentAngle = targetAngle
 
+        self.dir_motor.set_control(MotionMagicVoltage(self.currentRot * k_direction_gear_ratio))
+        self.drive_motor.set_control(VelocityVoltage(meters_to_rots(self.invert * desiredState.speed, k_drive_gear_ratio), override_brake_dur_neutral=override_brake_dur_neutral))
+
+
+class Swerve(commands2.Subsystem):
+    
+    navx = navx.AHRS.create_spi()
+
+    def __init_(self):
+        pass
