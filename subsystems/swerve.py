@@ -1,5 +1,3 @@
-import wpilib
-import phoenix6
 import commands2
 import navx
 import math
@@ -8,7 +6,7 @@ from phoenix6.configs.talon_fx_configs import *
 from phoenix6.configs.config_groups import MagnetSensorConfigs
 from phoenix6.controls import *
 from phoenix6.hardware import CANcoder, TalonFX
-from phoenix6.controls.motion_magic_voltage import MotionMagicVoltage, VelocityVoltage
+from phoenix6.controls.motion_magic_voltage import MotionMagicVoltage
 from phoenix6.signals import *
 from typing import Self
 from wpilib import DriverStation, Field2d, RobotBase, SmartDashboard
@@ -120,11 +118,15 @@ class Swerve(commands2.Subsystem):
         SmartDashboard.putData(self.field)
 
         # I'm assuming this puts a button in smartdashboard to reset yaw
-        reset_yaw = InstantCommand(lambda: self.reset_yaw())
+        reset_yaw = commands2.InstantCommand(lambda: self.reset_yaw())
         reset_yaw.setName("Reset Yaw")
         SmartDashboard.putData("Reset Yaw", reset_yaw)
 
+        # ???
         self.max_module_speed()
+
+        self.navx.reset()
+
 
     def reset_yaw(self) -> Self:
         self.navx.reset()
@@ -133,5 +135,23 @@ class Swerve(commands2.Subsystem):
     # Not sure if I need this because I think it's for Autonomous but I'll leave it here
     def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None:
         self.max_speed = max_speed
-    
 
+    def get_yaw(self) -> Rotation2d:
+        return Rotation2d.fromDegrees(-self.navx.getYaw())
+
+    # Field Relative
+    def drive(self, chassis_speed: ChassisSpeeds, rotation_center: Translation2d=Translation2d()) -> None:
+
+        self.set_module_state(self.kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(ChassisSpeeds.discretize(chassis_speed, 0.02), self.get_angle()), centerOfRotation = rotation_center))
+
+    def get_speeds(self) -> ChassisSpeeds:
+        return ChassisSpeeds.fromRobotRelativeSpeeds(self.get_robot_relative_speeds(), self.get_angle())
+    
+    def get_robot_relative_speeds(self) -> ChassisSpeeds:
+        return self.kinematics.toChassisSpeeds((self.lf.get_module_state(), self.lr.get_module_state(), self.fr.get_module_state(), self.rr.get_module_state()))
+
+    def init(self):
+        self.fl.reset_sensor_pos()
+        self.rl.reset_sensor_pos()
+        self.fr.reset_sensor_pos()
+        self.rr.reset_sensor_pos()
