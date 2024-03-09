@@ -7,7 +7,7 @@ from wpilib import XboxController
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
-class Drive(commands2.Command):
+class Drive(Command):
 
     def __init__(self, swerve: Swerve, driver_controller: XboxController):
         super().__init__()
@@ -17,8 +17,8 @@ class Drive(commands2.Command):
 
         self.addRequirements(self.swerve)
 
-        speed_multis = [0.5, 1]
-        speed_index = 0
+        self.speed_multis = [0.5, 1]
+        self.speed_index = 0
 
     def execute(self) -> None:
 
@@ -27,15 +27,17 @@ class Drive(commands2.Command):
         trans_y = (-deadband(self.driver_controller.getLeftY(), ExternalConstants.DEADBAND) ** 3) * SwerveConstants.k_max_module_speed
         rotation = (-deadband(self.driver_controller.getRightX(), ExternalConstants.DEADBAND) ** 3) * SwerveConstants.k_max_rot_rate
 
+        # Kind of goofy slowdown method
         if self.driver_controller.getLeftStickButton():
-            (speed_index ++ 1) % 2
+            (self.speed_index ++ 1) % 2
         
+        # Sets the center of rotation to the center of the Navx (no translation)
         center_of_rotation = Translation2d()
+        
+        self.swerve.drive(ChassisSpeeds(trans_x * self.speed_multis[self.speed_index], trans_y * self.speed_multis[self.speed_index], rotation * self.speed_multis[self.speed_index]), center_of_rotation = center_of_rotation)
 
-        self.swerve.drive(ChassisSpeeds(trans_x * speed_multis[speed_index], trans_y * speed_multis[speed_index], rotation * speed_multis[speed_index]), center_of_rotation = center_of_rotation)
 
-
-    def end(self, interrupted:bool):
+    def end(self, interrupted: bool) -> bool:
         return super().end(interrupted)
     
     def isFinished(self) -> bool:

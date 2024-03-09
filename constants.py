@@ -20,14 +20,14 @@ class MotorIDs:
     
 class CANConstants:
     FL_ID = 5 # Front Left
-    RL_ID = 6 # Rear Left
+    BL_ID = 6 # Rear Left
     FR_ID = 7 # Front Right
-    RR_ID = 8 # Rear Right
+    BR_ID = 8 # Rear Right
 
     FL_OFFSET = -0.77001953125
-    RL_OFFSET = -0.49951171875
+    BL_OFFSET = -0.49951171875
     FR_OFFSET = 0.569580078125
-    RR_OFFSET = 0.596435546875
+    BR_OFFSET = 0.596435546875
 
 
 class IntakeConstants:

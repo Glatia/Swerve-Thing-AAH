@@ -43,6 +43,7 @@ class SwerveModule(commands2.Subsystem):
     def get_angle(self) -> Rotation2d:
         return Rotation2d.fromDegrees((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio)*360)
     
+    # Zeros the motors (I think)
     def reset_sensor_pos(self) -> None:
         self.dir_motor.set_position(-self.turn_encoder.get_absolute_position().wait_for_update(0.02).value * k_direction_gear_ratio)
 
@@ -71,8 +72,6 @@ class SwerveModule(commands2.Subsystem):
             self.invert = 1
 
         targetAngleDist = math.fabs(targetAngle - self.currentAngle)
-
-        # Not quite sure why we need this since the target angle should never be over 90 degrees away from the current angle
 
         if targetAngleDist > 180:
             targetAngleDist = abs(targetAngleDist - 360)
@@ -103,17 +102,17 @@ class Swerve(commands2.Subsystem):
     kinematics = SwerveDrive4Kinematics(Translation2d(1, 1), Translation2d(-1, 1), Translation2d(1, -1), Translation2d(-1, -1))
 
     fl = SwerveModule("FL", DriveMotorConstants(MotorIDs.LEFT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_FRONT_DIRECTION), CANConstants.FL_ID, CANConstants.FL_OFFSET)
-    rl = SwerveModule("RL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.FR_ID, CANConstants.FR_OFFSET)
+    bl = SwerveModule("BL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.BL_ID, CANConstants.BL_OFFSET)
     
     fr = SwerveModule("FR", DriveMotorConstants(MotorIDs.RIGHT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_FRONT_DIRECTION), CANConstants.FR_ID, CANConstants.FR_OFFSET)
-    rr = SwerveModule("RR", DriveMotorConstants(MotorIDs.RIGHT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_REAR_DIRECTION), CANConstants.RR_ID, CANConstants.RR_OFFSET)
+    br = SwerveModule("BR", DriveMotorConstants(MotorIDs.RIGHT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.RIGHT_REAR_DIRECTION), CANConstants.BR_ID, CANConstants.BR_OFFSET)
 
     field = Field2d()
 
     def __init_(self):
         super().__init__()
         
-        self.odometry = SwerveDrive4PoseEstimator(self.kinematics, self.get_angle(), (self.fl.get_pos(), self.rl.get_pos(), self.fr.get_pos(), self.rr.get_pos()), Pose2d())
+        self.odometry = SwerveDrive4PoseEstimator(self.kinematics, self.get_yaw(), (self.fl.get_pos(), self.bl.get_pos(), self.fr.get_pos(), self.br.get_pos()), Pose2d())
 
         SmartDashboard.putData(self.field)
 
@@ -122,9 +121,9 @@ class Swerve(commands2.Subsystem):
         reset_yaw.setName("Reset Yaw")
         SmartDashboard.putData("Reset Yaw", reset_yaw)
 
-        # ???
         self.max_module_speed()
 
+        # Resets the navx yaw when the robot is restarted
         self.navx.reset()
 
 
@@ -132,26 +131,39 @@ class Swerve(commands2.Subsystem):
         self.navx.reset()
         return self
 
-    # Not sure if I need this because I think it's for Autonomous but I'll leave it here
     def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None:
         self.max_speed = max_speed
 
+    # Returns the yaw
     def get_yaw(self) -> Rotation2d:
         return Rotation2d.fromDegrees(-self.navx.getYaw())
 
     # Field Relative
     def drive(self, chassis_speed: ChassisSpeeds, rotation_center: Translation2d=Translation2d()) -> None:
 
-        self.set_module_state(self.kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(ChassisSpeeds.discretize(chassis_speed, 0.02), self.get_angle()), centerOfRotation = rotation_center))
+        self.set_all_module_states(self.kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(ChassisSpeeds.discretize(chassis_speed, 0.02), self.get_yaw()), centerOfRotation = rotation_center))
 
+    # Returns a ChassisSpeed object, field relative
     def get_speeds(self) -> ChassisSpeeds:
-        return ChassisSpeeds.fromRobotRelativeSpeeds(self.get_robot_relative_speeds(), self.get_angle())
+        return ChassisSpeeds.fromRobotRelativeSpeeds(self.get_robot_relative_speeds(), self.get_yaw())
     
+    # Returns a ChassisSpeed object, robot relative
     def get_robot_relative_speeds(self) -> ChassisSpeeds:
-        return self.kinematics.toChassisSpeeds((self.lf.get_module_state(), self.lr.get_module_state(), self.fr.get_module_state(), self.rr.get_module_state()))
+        return self.kinematics.toChassisSpeeds((self.fl.get_module_state(), self.bl.get_module_state(), self.fr.get_module_state(), self.br.get_module_state()))
 
+    # Sets the module states for each module
+    def set_all_module_states(self, module_states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]) -> None:
+
+        desaturated_states = self.kinematics.desaturateWheelSpeeds(module_states, self.max_module_speed)
+
+        self.fl.set_module_state(desaturated_states[0], override_brake_dur_neutral=True)
+        self.bl.set_module_state(desaturated_states[1], override_brake_dur_neutral=True)
+        self.fr.set_module_state(desaturated_states[2], override_brake_dur_neutral=True)
+        self.bl.set_module_state(desaturated_states[3], override_brake_dur_neutral=True)
+
+    # Resets the sensor positions once the modules are created
     def init(self):
         self.fl.reset_sensor_pos()
-        self.rl.reset_sensor_pos()
+        self.bl.reset_sensor_pos()
         self.fr.reset_sensor_pos()
-        self.rr.reset_sensor_pos()
+        self.br.reset_sensor_pos()
