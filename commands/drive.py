@@ -20,6 +20,8 @@ class Drive(Command):
         self.speed_multis = [0.5, 1]
         self.speed_index = 0
 
+        self.center_of_rotation = Translation2d()
+
     def execute(self) -> None:
 
         # For Chassis Speeds, X is forward, which would be the Y on the Xbox Controller.
@@ -32,10 +34,12 @@ class Drive(Command):
             (self.speed_index ++ 1) % 2
         
         # Sets the center of rotation to the center of the Navx (no translation)
-        center_of_rotation = Translation2d()
         
-        self.swerve.drive(ChassisSpeeds(trans_x * self.speed_multis[self.speed_index], trans_y * self.speed_multis[self.speed_index], rotation * self.speed_multis[self.speed_index]), center_of_rotation = center_of_rotation)
+        self.swerve.drive(ChassisSpeeds(trans_x * self.speed_multis[self.speed_index], trans_y * self.speed_multis[self.speed_index], rotation * self.speed_multis[self.speed_index]), center_of_rotation = self.center_of_rotation)
 
+    def change_center_of_rotation(self, center: bool):
+
+        self.center_of_rotation = Translation2d(center, 0.0)
 
     def end(self, interrupted: bool) -> bool:
         return super().end(interrupted)

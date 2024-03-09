@@ -101,6 +101,7 @@ class Swerve(commands2.Subsystem):
 
     kinematics = SwerveDrive4Kinematics(Translation2d(1, 1), Translation2d(-1, 1), Translation2d(1, -1), Translation2d(-1, -1))
 
+    # Creates the four swerve modules
     fl = SwerveModule("FL", DriveMotorConstants(MotorIDs.LEFT_FRONT_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_FRONT_DIRECTION), CANConstants.FL_ID, CANConstants.FL_OFFSET)
     bl = SwerveModule("BL", DriveMotorConstants(MotorIDs.LEFT_REAR_DRIVE), DirectionMotorConstants(MotorIDs.LEFT_REAR_DIRECTION), CANConstants.BL_ID, CANConstants.BL_OFFSET)
     
@@ -109,7 +110,8 @@ class Swerve(commands2.Subsystem):
 
     field = Field2d()
 
-    def __init_(self):
+    def __init__(self):
+
         super().__init__()
         
         self.odometry = SwerveDrive4PoseEstimator(self.kinematics, self.get_yaw(), (self.fl.get_pos(), self.bl.get_pos(), self.fr.get_pos(), self.br.get_pos()), Pose2d())
@@ -142,14 +144,6 @@ class Swerve(commands2.Subsystem):
     def drive(self, chassis_speed: ChassisSpeeds, rotation_center: Translation2d=Translation2d()) -> None:
 
         self.set_all_module_states(self.kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(ChassisSpeeds.discretize(chassis_speed, 0.02), self.get_yaw()), centerOfRotation = rotation_center))
-
-    # Returns a ChassisSpeed object, field relative
-    def get_speeds(self) -> ChassisSpeeds:
-        return ChassisSpeeds.fromRobotRelativeSpeeds(self.get_robot_relative_speeds(), self.get_yaw())
-    
-    # Returns a ChassisSpeed object, robot relative
-    def get_robot_relative_speeds(self) -> ChassisSpeeds:
-        return self.kinematics.toChassisSpeeds((self.fl.get_module_state(), self.bl.get_module_state(), self.fr.get_module_state(), self.br.get_module_state()))
 
     # Sets the module states for each module
     def set_all_module_states(self, module_states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]) -> None:

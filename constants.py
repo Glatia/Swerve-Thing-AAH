@@ -12,11 +12,6 @@ class MotorIDs:
     RIGHT_FRONT_DIRECTION = 7
     RIGHT_REAR_DIRECTION = 8
     
-    PIVOTMOTOR = 9
-    INTAKEMOTOR = 10
-    
-    ELEVATORMOTOR_RIGHT = 11
-    ELEVATORMOTOR_LEFT = 12
     
 class CANConstants:
     FL_ID = 5 # Front Left
@@ -28,31 +23,6 @@ class CANConstants:
     BL_OFFSET = -0.49951171875
     FR_OFFSET = 0.569580078125
     BR_OFFSET = 0.596435546875
-
-
-class IntakeConstants:
-    GEAR_RATIO = 5
-    INTAKESPEED = 1
-
-class PivotConstants:
-    MM_ACCELERATION = 4
-    MM_CRUISE_VEL = 4
-    STOWPOS = 0
-    INTAKEPOS = 0.375
-    SCOREPOS = 0.3
-    K_P = 10
-    K_I = 0
-    K_D = 0.2
-    K_V = 0.12
-    K_S = 0.2
-    GEAR_RATIO = 50
-
-class ElevatorConstants:
-    CURRENTSUPPLYLIMIT = 4
-    TOPPOSITION = 61.508192307692307692307692307692 # lol big number
-    BOTTOMPOSITION = -3.25
-    MM_ACCEL = 100
-    MM_VEL = 100
 
 class ExternalConstants:
     DRIVERCONTROLLER = 0
