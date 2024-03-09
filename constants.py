@@ -1,5 +1,6 @@
 from phoenix6.configs.talon_fx_configs import InvertedValue, NeutralModeValue, TalonFXConfiguration
 from phoenix6.hardware.talon_fx import TalonFX
+import math
 
 class MotorIDs:
     LEFT_FRONT_DRIVE = 1
@@ -109,7 +110,7 @@ k_drive_gear_ratio = 27 / 4
 # Conversions
 
 def meters_to_rots(meters: float, ratio: float) -> float:
-    return meters / (pi * SwerveConstants.k_wheel_size) * ratio
+    return meters / (math.pi * SwerveConstants.k_wheel_size) * ratio
 
 def rots_to_meters(rotation: float, ratio: float=1) -> float:
-    return (rotation / ratio) * (pi * SwerveConstants.k_wheel_size)
+    return (rotation / ratio) * (math.pi * SwerveConstants.k_wheel_size)
