@@ -37,7 +37,7 @@ class Drive(Command):
         
         self.swerve.drive(ChassisSpeeds(trans_x * self.speed_multis[self.speed_index], trans_y * self.speed_multis[self.speed_index], rotation * self.speed_multis[self.speed_index]), center_of_rotation = self.center_of_rotation)
 
-    def change_center_of_rotation(self, center: bool):
+    def change_center_of_rotation(self, center: float):
 
         self.center_of_rotation = Translation2d(center, 0.0)
 

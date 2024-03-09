@@ -18,5 +18,6 @@ class RobotContainer:
 
         self.swerve.setDefaultCommand(Drive(self.swerve, self.driver_controller))
 
-        JoystickButton(self.driver_controller, XboxController.Button.kRightBumper).whileTrue(commands2.InstantCommand(lambda: Drive.change_center_of_rotation(5)))
+        JoystickButton(self.driver_controller, XboxController.Button.kRightBumper).onTrue(commands2.InstantCommand(lambda: Drive.change_center_of_rotation(5.0)))
+        JoystickButton(self.driver_controller, XboxController.Button.kRightBumper).onFalse(commands2.InstantCommand(lambda: Drive.change_center_of_rotation(0.0)))
 
