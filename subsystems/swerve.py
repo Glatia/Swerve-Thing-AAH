@@ -37,13 +37,11 @@ class SwerveModule(commands2.Subsystem):
 
         self.currentRot = self.currentAngle = 0.0
 
-        self.sim = 0
-
     # Returns the current angle based off of the rotor position of the direction motor and the gear ratio between it and the wheel
     def get_angle(self) -> Rotation2d:
         return Rotation2d.fromDegrees((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio)*360)
     
-    # Zeros the motors (I think)
+    # Resets the turn motor to 0 rots by subtracting its current position from itself
     def reset_sensor_pos(self) -> None:
         self.dir_motor.set_position(-self.turn_encoder.get_absolute_position().wait_for_update(0.02).value * k_direction_gear_ratio)
 
@@ -72,7 +70,8 @@ class SwerveModule(commands2.Subsystem):
             self.invert = 1
 
         targetAngleDist = math.fabs(targetAngle - self.currentAngle)
-
+        
+        # Not sure what this does
         if targetAngleDist > 180:
             targetAngleDist = abs(targetAngleDist - 360)
 
