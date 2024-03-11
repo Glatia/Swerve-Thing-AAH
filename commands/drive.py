@@ -31,7 +31,7 @@ class Drive(Command):
 
         # Kind of goofy slowdown method
         if self.driver_controller.getLeftStickButton():
-            (self.speed_index ++ 1) % 2
+            (self.speed_index += 1) % 2
         
         # Sets the center of rotation to the center of the Navx (no translation)
         
