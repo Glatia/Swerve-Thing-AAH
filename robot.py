@@ -7,7 +7,7 @@ from robotcontainer import RobotContainer
 from phoenix6.signal_logger import SignalLogger
 from wpilib import XboxController, SmartDashboard, DriverStation, RobotBase
 
-
+# Main Robot class
 class Schwervin(commands2.TimedCommandRobot):
 
     def __init__(self, period: float = wpilib.TimedRobot.kDefaultPeriod / 1000) -> None:
@@ -20,6 +20,7 @@ class Schwervin(commands2.TimedCommandRobot):
 
         SignalLogger.enable_auto_logging(False)
 
+        # Creates the RobotContainer object
         self.container = RobotContainer()
     
         

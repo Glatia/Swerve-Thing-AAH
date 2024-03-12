@@ -1,4 +1,4 @@
-from commands2 import Command
+import commands2
 from constants import *
 from enum import Enum
 from math import fabs
@@ -7,9 +7,9 @@ from wpilib import XboxController
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import ChassisSpeeds
 
-class Drive(Command):
+class Drive(commands2.Command):
 
-    def __init__(self, swerve: Swerve, driver_controller: XboxController):
+    def __init__(self, swerve: Swerve, driver_controller: XboxController) -> None:
         super().__init__()
 
         self.swerve = swerve
@@ -31,9 +31,8 @@ class Drive(Command):
 
         # Kind of goofy slowdown method
         if self.driver_controller.getLeftStickButton():
-            (self.speed_index += 1) % 2
+            self.speed_index = (self.speed_index + 1) % 2
         
-        # Sets the center of rotation to the center of the Navx (no translation)
         
         self.swerve.drive(ChassisSpeeds(trans_x * self.speed_multis[self.speed_index], trans_y * self.speed_multis[self.speed_index], rotation * self.speed_multis[self.speed_index]), center_of_rotation = self.center_of_rotation)
 

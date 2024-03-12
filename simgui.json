@@ -1,0 +1,12 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Reset Yaw": "Command"
+    }
+  },
+  "NetworkTables Info": {
+    "visible": true
+  }
+}

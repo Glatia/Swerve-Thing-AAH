@@ -61,7 +61,9 @@ class SwerveModule(commands2.Subsystem):
 
         angleDistance = math.fabs(desiredAngle - self.currentAngle)
 
-        # Angle Optimization
+        # =====================Angle Optimization=====================
+
+        # If the angle distance is greater than 90 and less than 270, change the target angle to across from the desired angle and invert the wheel        
         if (angleDistance > 90 and angleDistance < 270):
             targetAngle = (desiredAngle + 180) % 360
             self.invert = -1
@@ -69,35 +71,40 @@ class SwerveModule(commands2.Subsystem):
             targetAngle = desiredAngle
             self.invert = 1
 
+        # Sets the distance to the new target angle
         targetAngleDist = math.fabs(targetAngle - self.currentAngle)
-        
-        # Not sure what this does
-        if targetAngleDist > 180:
-            targetAngleDist = abs(targetAngleDist - 360)
 
+        # Converts the target angle (which is in degrees) to rots (which is what the motors use)
         rotChange = targetAngleDist / 360
 
+        # Sets the angle difference between the targetAngle and the currentAngle
         angleDifference = targetAngle - self.currentAngle
         
+        # If the distance is less than 0, add 360
         if angleDifference < 0:
-            angleDifference += 360
+            angleDifference %= 360
         
+        # If the angleDifference is greater than 180, then we subtract (because 360 - (anything greater than 180) < 180 so it's quicker to move in the other direction)
         if angleDifference > 180:
             self.currentRot -= rotChange
+        # If not, then its closer by moving in the positive direction
         else:
             self.currentRot += rotChange
         
+        # Sets the current angle to the target angle (because that's where we're heading)
         self.currentAngle = targetAngle
 
+        # Moves the motor
         self.dir_motor.set_control(MotionMagicVoltage(self.currentRot * k_direction_gear_ratio))
         self.drive_motor.set_control(VelocityVoltage(meters_to_rots(self.invert * desiredState.speed, k_drive_gear_ratio), override_brake_dur_neutral=override_brake_dur_neutral))
 
-
+# Drivetrain class
 class Swerve(commands2.Subsystem):
     
     navx = navx.AHRS.create_spi()
     navx.enableLogging(False)
 
+    # Creates the swerve kinematics object
     kinematics = SwerveDrive4Kinematics(Translation2d(1, 1), Translation2d(-1, 1), Translation2d(1, -1), Translation2d(-1, -1))
 
     # Creates the four swerve modules
@@ -127,11 +134,12 @@ class Swerve(commands2.Subsystem):
         # Resets the navx yaw when the robot is restarted
         self.navx.reset()
 
-
+    # Resets the yaw on the navx
     def reset_yaw(self) -> Self:
         self.navx.reset()
         return self
 
+    # Sets the max speed that the modules can move at
     def max_module_speed(self, max_speed: float=SwerveConstants.k_max_module_speed) -> None:
         self.max_speed = max_speed
 
@@ -147,8 +155,10 @@ class Swerve(commands2.Subsystem):
     # Sets the module states for each module
     def set_all_module_states(self, module_states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]) -> None:
 
-        desaturated_states = self.kinematics.desaturateWheelSpeeds(module_states, self.max_module_speed)
+        # Desaturates the inputs to the wheel to within the specified constraints
+        desaturated_states = self.kinematics.desaturateWheelSpeeds(module_states, self.max_speed)
 
+        # Sets the state for each module
         self.fl.set_module_state(desaturated_states[0], override_brake_dur_neutral=True)
         self.bl.set_module_state(desaturated_states[1], override_brake_dur_neutral=True)
         self.fr.set_module_state(desaturated_states[2], override_brake_dur_neutral=True)
