@@ -73,6 +73,8 @@ class SwerveModule(commands2.Subsystem):
 
         # Sets the distance to the new target angle
         targetAngleDist = math.fabs(targetAngle - self.currentAngle)
+        if targetAngleDist > 180:
+            targetAngleDist = abs(targetAngleDist - 360)
 
         # Converts the target angle (which is in degrees) to rots (which is what the motors use)
         rotChange = targetAngleDist / 360
@@ -86,10 +88,10 @@ class SwerveModule(commands2.Subsystem):
         
         # If the angleDifference is greater than 180, then we subtract (because 360 - (anything greater than 180) < 180 so it's quicker to move in the other direction)
         if angleDifference > 180:
-            self.currentRot -= rotChange
+            self.currentRot += rotChange
         # If not, then its closer by moving in the positive direction
         else:
-            self.currentRot += rotChange
+            self.currentRot -= rotChange
         
         # Sets the current angle to the target angle (because that's where we're heading)
         self.currentAngle = targetAngle
@@ -124,7 +126,6 @@ class Swerve(commands2.Subsystem):
 
         SmartDashboard.putData(self.field)
 
-        # I'm assuming this puts a button in smartdashboard to reset yaw
         reset_yaw = commands2.InstantCommand(lambda: self.reset_yaw())
         reset_yaw.setName("Reset Yaw")
         SmartDashboard.putData("Reset Yaw", reset_yaw)
@@ -162,7 +163,7 @@ class Swerve(commands2.Subsystem):
         self.fl.set_module_state(desaturated_states[0], override_brake_dur_neutral=True)
         self.bl.set_module_state(desaturated_states[1], override_brake_dur_neutral=True)
         self.fr.set_module_state(desaturated_states[2], override_brake_dur_neutral=True)
-        self.bl.set_module_state(desaturated_states[3], override_brake_dur_neutral=True)
+        self.br.set_module_state(desaturated_states[3], override_brake_dur_neutral=True)
 
     # Resets the sensor positions once the modules are created
     def init(self):
