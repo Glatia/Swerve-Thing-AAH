@@ -20,10 +20,10 @@ class CANConstants:
     FR_ID = 7 # Front Right
     BR_ID = 8 # Rear Right
 
-    FL_OFFSET = -0.474853515625
-    BL_OFFSET = -0.0009765625
-    FR_OFFSET = -0.399658203125
-    BR_OFFSET = -0.077880859375
+    FL_OFFSET = 0.0249023438
+    BL_OFFSET = -0.498779296875
+    FR_OFFSET = -0.89990234375
+    BR_OFFSET = -0.08203125
 
 class ExternalConstants:
     DRIVERCONTROLLER = 0
@@ -47,7 +47,7 @@ class SwerveConstants:
 class DriveMotorConstants:
 
     def __init__(self, motor_id: int, 
-                 k_s: float=0.0, k_v: float=0.12, k_a: float=0, k_p: float=0.14, k_i: float=0, k_d: float=0, inverted: InvertedValue=InvertedValue.COUNTER_CLOCKWISE_POSITIVE) -> None:
+                 k_s: float=0.0, k_v: float=0.12, k_a: float=0, k_p: float=0.14, k_i: float=0, k_d: float=0, inverted: InvertedValue=InvertedValue.CLOCKWISE_POSITIVE) -> None:
         
         self.motor_id = motor_id
         

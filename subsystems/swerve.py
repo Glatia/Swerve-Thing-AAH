@@ -84,20 +84,20 @@ class SwerveModule(commands2.Subsystem):
         
         # If the distance is less than 0, add 360
         if angleDifference < 0:
-            angleDifference %= 360
+            angleDifference += 360
         
         # If the angleDifference is greater than 180, then we subtract (because 360 - (anything greater than 180) < 180 so it's quicker to move in the other direction)
         if angleDifference > 180:
-            self.currentRot += rotChange
+            self.currentRot -= rotChange
         # If not, then its closer by moving in the positive direction
         else:
-            self.currentRot -= rotChange
+            self.currentRot += rotChange
         
         # Sets the current angle to the target angle (because that's where we're heading)
         self.currentAngle = targetAngle
 
         # Moves the motor
-        self.dir_motor.set_control(MotionMagicVoltage(self.currentRot * k_direction_gear_ratio))
+        self.dir_motor.set_control(PositionVoltage(self.currentRot * k_direction_gear_ratio))
         self.drive_motor.set_control(VelocityVoltage(meters_to_rots(self.invert * desiredState.speed, k_drive_gear_ratio), override_brake_dur_neutral=override_brake_dur_neutral))
 
 # Drivetrain class
@@ -121,8 +121,6 @@ class Swerve(commands2.Subsystem):
     def __init__(self):
 
         super().__init__()
-        
-        self.odometry = SwerveDrive4PoseEstimator(self.kinematics, self.get_yaw(), (self.fl.get_pos(), self.bl.get_pos(), self.fr.get_pos(), self.br.get_pos()), Pose2d())
 
         SmartDashboard.putData(self.field)
 
