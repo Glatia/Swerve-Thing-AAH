@@ -24,9 +24,9 @@ class Drive(commands2.Command):
     def execute(self) -> None:
 
         # For Chassis Speeds, X is forward, which would be the Y on the Xbox Controller.
-        trans_x = (-deadband(self.driver_controller.getLeftX(), ExternalConstants.DEADBAND) ** 3) * SwerveConstants.k_max_module_speed
-        trans_y = (-deadband(self.driver_controller.getLeftY(), ExternalConstants.DEADBAND) ** 3) * SwerveConstants.k_max_module_speed
-        rotation = (-deadband(self.driver_controller.getRightX(), ExternalConstants.DEADBAND) ** 3) * SwerveConstants.k_max_rot_rate
+        trans_x = (-(self.driver_controller.getLeftX()) ** 3) * SwerveConstants.k_max_module_speed
+        trans_y = (-(self.driver_controller.getLeftY()) ** 3) * SwerveConstants.k_max_module_speed
+        rotation = (-(self.driver_controller.getRightX()) ** 3) * SwerveConstants.k_max_rot_rate
 
         # Kind of goofy slowdown method
         if self.driver_controller.getLeftStickButton():
@@ -44,7 +44,3 @@ class Drive(commands2.Command):
     
     def isFinished(self) -> bool:
         return False
-
-def deadband(value, deadband) -> float:
-    if fabs(value) <= deadband: return 0.0
-    else: return value
