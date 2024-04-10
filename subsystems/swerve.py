@@ -35,11 +35,11 @@ class SwerveModule(commands2.Subsystem):
         self.dir_motor = TalonFX(dir_motor_constants.motor_id, "rio")
         dir_motor_constants.apply_configuration(self.dir_motor)
 
-        self.currentRot = self.currentAngle = 0.0
+        self.currentRot = 0.0
 
     # Returns the current angle based off of the rotor position of the direction motor and the gear ratio between it and the wheel
     def get_angle(self) -> Rotation2d:
-        return Rotation2d.fromDegrees((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio)*360)
+        return Rotation2d.fromRotations((self.dir_motor.get_rotor_position().value / k_direction_gear_ratio))
     
     # Resets the turn motor to 0 rots by subtracting its current position from itself
     def reset_sensor_pos(self) -> None:
@@ -57,44 +57,42 @@ class SwerveModule(commands2.Subsystem):
     def set_module_state(self, desiredState: SwerveModuleState, override_brake_dur_neutral: bool=True) -> None:
         
         desiredState.optimize(desiredState, self.get_angle())
-        desiredAngle = desiredState.angle.degrees() % 360
+        desiredAngle = desiredState.angle.rotations()
 
-        angleDistance = math.fabs(desiredAngle - self.currentAngle)
+        angleDistance = math.fabs(desiredAngle - self.currentRot)
 
         # =====================Angle Optimization=====================
 
         # If the angle distance is greater than 90 and less than 270, change the target angle to across from the desired angle and invert the wheel        
-        if (angleDistance > 90 and angleDistance < 270):
-            targetAngle = (desiredAngle + 180) % 360
+        if (angleDistance > 0.25 and angleDistance < 0.75):
+            targetAngle = (desiredAngle + 0.5)
             self.invert = -1
         else:
             targetAngle = desiredAngle
             self.invert = 1
 
         # Sets the distance to the new target angle
-        targetAngleDist = math.fabs(targetAngle - self.currentAngle)
-        if targetAngleDist > 180:
-            targetAngleDist = abs(targetAngleDist - 360)
+        targetAngleDist = math.fabs(targetAngle - self.currentRot)
+        if targetAngleDist > 0.5:
+            targetAngleDist = abs(targetAngleDist - 1)
 
-        # Converts the target angle (which is in degrees) to rots (which is what the motors use)
-        rotChange = targetAngleDist / 360
 
-        # Sets the angle difference between the targetAngle and the currentAngle
-        angleDifference = targetAngle - self.currentAngle
+        # Sets the angle difference between the targetAngle and the currentRot
+        angleDifference = targetAngle - self.currentRot
         
         # If the distance is less than 0, add 360
         if angleDifference < 0:
-            angleDifference += 360
+            angleDifference += 1
         
         # If the angleDifference is greater than 180, then we subtract (because 360 - (anything greater than 180) < 180 so it's quicker to move in the other direction)
-        if angleDifference > 180:
-            self.currentRot -= rotChange
+        if angleDifference > 0.5:
+            self.currentRot -= targetAngleDist
         # If not, then its closer by moving in the positive direction
         else:
-            self.currentRot += rotChange
+            self.currentRot += targetAngleDist
         
         # Sets the current angle to the target angle (because that's where we're heading)
-        self.currentAngle = targetAngle
+        self.currentRot = targetAngle
 
         # Moves the motor
         self.dir_motor.set_control(PositionVoltage(self.currentRot * k_direction_gear_ratio))
@@ -144,7 +142,7 @@ class Swerve(commands2.Subsystem):
 
     # Returns the yaw
     def get_yaw(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(-self.navx.getYaw())
+        return Rotation2d.fromRotations(-self.navx.getYaw())
 
     # Field Relative
     def drive(self, chassis_speed: ChassisSpeeds, rotation_center: Translation2d=Translation2d()) -> None:
