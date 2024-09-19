@@ -27,7 +27,6 @@ class CANConstants:
 
 class ExternalConstants:
     DRIVERCONTROLLER = 0
-    DEADBAND = 0.15
     FUNCTIONSCONTROLLER = 1
     TRIGGER_DEADBAND = 0.1
     
