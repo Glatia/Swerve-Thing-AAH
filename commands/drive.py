@@ -23,10 +23,11 @@ class Drive(commands2.Command):
 
     def execute(self) -> None:
 
-        # For Chassis Speeds, X is forward, which would be the Y on the Xbox Controller.
-        trans_x = (-(self.driver_controller.getLeftX()) ** 3) * SwerveConstants.k_max_module_speed
-        trans_y = (-(self.driver_controller.getLeftY()) ** 3) * SwerveConstants.k_max_module_speed
-        rotation = (-(self.driver_controller.getRightX()) ** 3) * SwerveConstants.k_max_rot_rate
+        # For Chassis Speeds, X is forward, which would be the y-axis on the Xbox Controller
+        # Note: Leave the deadband there, it can be disabled in the function itself
+        trans_x = (-deadband(self.driver_controller.getLeftX()) ** 3) * SwerveConstants.k_max_module_speed
+        trans_y = (-deadband(self.driver_controller.getLeftY()) ** 3) * SwerveConstants.k_max_module_speed
+        rotation = (-deadband(self.driver_controller.getRightX()) ** 3) * SwerveConstants.k_max_rot_rate
 
         # Kind of goofy slowdown method
         if self.driver_controller.getLeftStickButton():
@@ -44,3 +45,11 @@ class Drive(commands2.Command):
     
     def isFinished(self) -> bool:
         return False
+
+# Change using to 'True' when not using the Hall Effect controllers
+def deadband(value, deadband=ExternalConstants.DEADBAND, using=False):
+    if using:
+        if value <= deadband:
+            return 0
+        else: return value
+    else: return value
